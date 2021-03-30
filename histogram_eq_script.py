@@ -5,6 +5,9 @@ import numpy as np
 from scipy import ndimage
 
 cap = cv2.VideoCapture('night/Night Drive - 2689.mp4')
+# cap = cv2.VideoCapture('data_2/challenge_video.mp4')
+# cap = cv2.VideoCapture('data1.mp4')
+
 
 while(cap.isOpened()):
     ret, frame = cap.read()
@@ -13,7 +16,7 @@ while(cap.isOpened()):
     # blur = cv2.GaussianBlur(gray, (51, 51), 0)
     # blur = cv2.medianBlur(gray,15)
     equalized = cv2.equalizeHist(gray)
-    # blur = cv2.GaussianBlur(equalized, (9, 9), 0)
+    blur = cv2.GaussianBlur(equalized, (9, 9), 0)
     # blur = cv2.medianBlur(equalized,15)
 
     cv2.imshow('frame',equalized)
