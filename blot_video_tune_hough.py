@@ -6,6 +6,8 @@ from scipy import ndimage
 
 import unwarp_util
 import math
+import matplotlib.pyplot as plt
+
 
 def callback(x):
     pass
@@ -166,6 +168,7 @@ while(cap.isOpened()):
                 angle = int(math.atan((l[1] - l[3]) / (l[0] - l[2])) * 180 / math.pi)
             except:
                 angle = 99
+                print("angle exception")
 
             if abs(angle) > degree_low and abs(angle) < degree_high:
                 angle_string = str(angle) # theta
@@ -176,6 +179,9 @@ while(cap.isOpened()):
             else:
                 cv2.putText(cropped_image, ".", (l[0], l[1]), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,0))
 
+    # x_angle
+    # y_
+    # plt.plot()
 
     print(count)
     cv2.imshow('25',res)
