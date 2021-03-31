@@ -5,58 +5,14 @@ import numpy as np
 from scipy import ndimage
 
 import unwarp_util
+import math
 
-class Point(object):
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-
-    def getX(self):
-        return self.x
-
-    def getY(self):
-        return self.y
-
-
-def getGrayDiff(img, currentPoint, tmpPoint):
-    return abs(int(img[currentPoint.x, currentPoint.y]) - int(img[tmpPoint.x, tmpPoint.y]))
-
-
-def selectConnects(p):
-    if p != 0:
-        connects = [Point(-1, -1), Point(0, -1), Point(1, -1), Point(1, 0), Point(1, 1), \
-                    Point(0, 1), Point(-1, 1), Point(-1, 0)]
-    else:
-        connects = [Point(0, -1), Point(1, 0), Point(0, 1), Point(-1, 0)]
-    return connects
-
-
-def regionGrow(img, seeds, thresh, p=1):
-    height, weight = img.shape
-    seedMark = np.zeros(img.shape)
-    seedList = []
-    for seed in seeds:
-        seedList.append(seed)
-    label = 1
-    connects = selectConnects(p)
-    while (len(seedList) > 0):
-        currentPoint = seedList.pop(0)
-
-        seedMark[currentPoint.x, currentPoint.y] = label
-        for i in range(8):
-            tmpX = currentPoint.x + connects[i].x
-            tmpY = currentPoint.y + connects[i].y
-            if tmpX < 0 or tmpY < 0 or tmpX >= height or tmpY >= weight:
-                continue
-            grayDiff = getGrayDiff(img, currentPoint, Point(tmpX, tmpY))
-            if grayDiff < thresh and seedMark[tmpX, tmpY] == 0:
-                seedMark[tmpX, tmpY] = label
-                seedList.append(Point(tmpX, tmpY))
-    return seedMark
+def callback(x):
+    pass
 
 # video_name = 'night/Night Drive - 2689'
-video_name = 'data_2/challenge_video' # todo input
-# video_name = 'data1'
+# video_name = 'data_2/challenge_video' # todo input
+video_name = 'data1'
 
 if video_name == 'night/Night Drive - 2689':
     string_name = 'Night Drive - 2689'
@@ -71,10 +27,6 @@ if cap.isOpened():
     # get cap property
     img_width  = int( cap.get(cv2.CAP_PROP_FRAME_WIDTH) )   # float `img_width`
     img_height = int( cap.get(cv2.CAP_PROP_FRAME_HEIGHT) ) # float `img_height`
-    # or
-    # img_width  = cap.get(3)  # float `img_width`
-    # img_height = cap.get(4)  # float `img_height`
-
     fps = cap.get(cv2.CAP_PROP_FPS)
 
 
@@ -82,20 +34,21 @@ if cap.isOpened():
 if video_name == 'data_2/challenge_video':
     crop_height = int(img_height/2+img_height*.15)
 elif video_name == 'data1':
-    # crop_height = int(img_height/2) + int(img_height*.15)
     crop_height = int(img_height/2)
 
-grid_spacing_row = 50
-grid_spacing_col = 50
-# seeds = [Point(10, 10), Point(82, 150), Point(20, 300)]
-# seeds = []
-# for j in range(0,img_width,grid_spacing_col):
-#     for i in range(0,img_height-crop_height,grid_spacing_row):
-#         seeds.append(Point(i,j))
+cv2.namedWindow('image')
+rho=1
+theta=np.pi / 180
+threshold=20
+minLineLength=0
+maxLineGap=0
+# create trackbars for color change
+cv2.createTrackbar('rho','image',rho,255,callback)
+# cv2.createTrackbar('theta','image',theta,255.0,callback)
+cv2.createTrackbar('threshold','image',threshold,255,callback)
+cv2.createTrackbar('minLineLength','image',minLineLength,255,callback)
+cv2.createTrackbar('maxLineGap','image',maxLineGap,255,callback)
 
-# for j in range(0,img_width,grid_spacing_col):
-#     for i in range(0,img_height,grid_spacing_row):
-#         seeds.append(Point(i,j))
 
 ilowH = 0
 ihighH = 255
@@ -117,12 +70,17 @@ ihighV = 255
 # ihighV_yellow = 240
 
 
-
-
-
-
 count = 0
 while(cap.isOpened()):
+
+    rho = cv2.getTrackbarPos('rho', 'image')
+    # theta = cv2.getTrackbarPos('theta', 'image')
+    threshold = cv2.getTrackbarPos('threshold', 'image')
+    minLineLength = cv2.getTrackbarPos('minLineLength', 'image')
+    maxLineGap = cv2.getTrackbarPos('maxLineGap', 'image')
+
+
+
     ret, frame = cap.read()
 
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -160,13 +118,6 @@ while(cap.isOpened()):
 
     res_hsv_thresholded = cv2.bitwise_and(res_hsv, res_hsv, mask=mask_hsv)
 
-    # binaryImg = regionGrow(gray, seeds, 10)
-    # cv2.imshow(' ', binaryImg)
-    # cv2.waitKey(0)
-    # mask original color image with binary image
-    # cv2.rectangle(frame, (0, 0), (img_width,int(img_height/2) + int(img_height*.15)), (0, 255, 0), 3)
-    # cv2.imshow('11',th3)
-
     # Probabilistic Line Transform
     # dst: Output of the edge detector. It should be a grayscale image (although in fact it is a binary one)
     # lines: A vector that will store the parameters (r,θ) of the detected lines
@@ -174,7 +125,10 @@ while(cap.isOpened()):
     # theta: The resolution of the parameter θ in radians. We use 1 degree (CV_PI/180)
     # threshold: The minimum number of intersections to "*detect*" a line
     # srn and stn: Default parameters to zero. Check OpenCV reference for more info.
-    linesP = cv2.HoughLinesP(image=mask_hsv, rho=1, theta=np.pi / 180, threshold=20, lines=None, minLineLength=0, maxLineGap=0)
+    # linesP = cv2.HoughLinesP(image=mask_hsv, rho=1, theta=np.pi / 180, threshold=20, lines=None, minLineLength=0, maxLineGap=0)
+    linesP = cv2.HoughLinesP(image=mask_hsv, rho=rho, theta=np.pi / 180, threshold=threshold, lines=None, minLineLength=minLineLength, maxLineGap=maxLineGap)
+    # lines = cv2.HoughLines(image=mask_hsv, rho=rho, theta=np.pi / 180, threshold=threshold, lines=None)
+
 
     # Draw the lines
     if linesP is not None:
@@ -182,12 +136,22 @@ while(cap.isOpened()):
             l = linesP[i][0]
             cv2.line(cropped_image, (l[0], l[1]), (l[2], l[3]), (0,0,255), 3, cv2.LINE_AA)
 
+
+            try:
+                angle = int(math.atan((l[1] - l[3]) / (l[0] - l[2])) * 180 / math.pi)
+            except:
+                angle = 999
+
+            angle_string = str(angle) # theta
+            cv2.putText(cropped_image, angle_string, (l[0], l[1]), cv2.FONT_HERSHEY_DUPLEX, 0.5, 255)
+
+
     print(count)
-    cv2.imshow('25',res)
-    cv2.imshow("hsv_cropped", hsv_cropped)
-    cv2.imshow("th4", th4)
-    cv2.imshow("mask_hsv", mask_hsv)
-    cv2.imshow("mask_combined", mask_combined)
+    # cv2.imshow('25',res)
+    # cv2.imshow("hsv_cropped", hsv_cropped)
+    # cv2.imshow("th4", th4)
+    # cv2.imshow("mask_hsv", mask_hsv)
+    # cv2.imshow("mask_combined", mask_combined)
     cv2.imshow("cropped_annotated", cropped_image)
     if cv2.waitKey(0) & 0xFF == ord('q'):
         break
