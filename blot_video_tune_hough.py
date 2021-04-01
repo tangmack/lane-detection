@@ -13,8 +13,8 @@ def callback(x):
     pass
 
 # video_name = 'night/Night Drive - 2689'
-# video_name = 'data_2/challenge_video' # todo input
-video_name = 'data1'
+video_name = 'data_2/challenge_video' # todo input
+# video_name = 'data1'
 
 if video_name == 'night/Night Drive - 2689':
     string_name = 'Night Drive - 2689'
@@ -155,7 +155,7 @@ while(cap.isOpened()):
     # linesP = cv2.HoughLinesP(image=mask_hsv, rho=1, theta=np.pi / 180, threshold=20, lines=None, minLineLength=0, maxLineGap=0)
     # lines_var = []
     # linesP = cv2.HoughLinesP(image=mask_hsv, rho=rho, theta=np.pi / 180, threshold=threshold, lines=None, minLineLength=minLineLength, maxLineGap=maxLineGap)
-    linesP = cv2.HoughLinesP(image=mask_combined, rho=rho, theta=np.pi / 180, threshold=threshold, lines=None, minLineLength=minLineLength, maxLineGap=maxLineGap)
+    linesP = cv2.HoughLinesP(image=mask_combined, rho=rho, theta=np.pi / 180, threshold=threshold, lines=None, minLineLength=3, maxLineGap=maxLineGap)
 
 
     hough_only = np.zeros(gray.shape)
@@ -219,12 +219,13 @@ while(cap.isOpened()):
         cv2.line(cropped_image, (0, int(average_negative_b)), (img_width, int(average_negative_m*img_width+average_negative_b)), (0, 0, 255), 1, cv2.LINE_AA)
 
 
-    print("hello")
+    # print("hello")
     # print(str(average_negative)+"          "+str(average_positive))
 
-    # x_angle
-    # y_
-    # plt.plot()
+    x_plot = positive_angles + negative_angles
+    y_plot = positive_angle_b + negative_angle_b
+    plt.scatter(x_plot,y_plot)
+    plt.show()
 
     print(count)
     cv2.imshow('25',res)
