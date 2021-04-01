@@ -160,24 +160,67 @@ while(cap.isOpened()):
 
     hough_only = np.zeros(gray.shape)
     # Draw the lines
+    positive_angles = []
+    negative_angles = []
+    positive_angle_b = []
+    negative_angle_b = []
+    positive_angle_m = []
+    negative_angle_m = []
     if linesP is not None:
         for i in range(0, len(linesP)):
             l = linesP[i][0]
 
             try:
                 angle = int(math.atan((l[1] - l[3]) / (l[0] - l[2])) * 180 / math.pi)
+
+                m = (l[1] - l[3]) / (l[0] - l[2]) # now try to calculate b
+
+                b = l[1] - m * l[0]
             except:
                 angle = 99
+                b = 9999
                 print("angle exception")
 
             if abs(angle) > degree_low and abs(angle) < degree_high:
                 angle_string = str(angle) # theta
                 cv2.putText(cropped_image, angle_string, (l[0], l[1]), cv2.FONT_HERSHEY_DUPLEX, 0.5, 255)
-                cv2.line(cropped_image, (l[0], l[1]), (l[2], l[3]), (0, 0, 255), 3, cv2.LINE_AA)
-                cv2.line(hough_only, (l[0], l[1]), (l[2], l[3]), 255, 3, cv2.LINE_AA) # also draw on blank hough image
+                cv2.line(cropped_image, (l[0], l[1]), (l[2], l[3]), (0, 0, 255), 1, cv2.LINE_AA)
+                cv2.line(hough_only, (l[0], l[1]), (l[2], l[3]), 255, 1, cv2.LINE_AA) # also draw on blank hough image
+
+                if angle > 0:
+                    positive_angles.append(angle)
+                    positive_angle_b.append((b))
+                    positive_angle_m.append(m)
+                elif angle < 0:
+                    negative_angles.append(angle)
+                    negative_angle_b.append((b))
+                    negative_angle_m.append(m)
 
             else:
                 cv2.putText(cropped_image, ".", (l[0], l[1]), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,0))
+
+
+    if len(positive_angles) != 0:
+        average_positive = sum(positive_angles) / len(positive_angles)
+        average_positive_b = sum(positive_angle_b) / len(positive_angle_b)
+        average_positive_m = sum(positive_angle_m) / len(positive_angle_m)
+        cv2.putText(cropped_image, str(average_positive), (600,200), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 255))
+        cv2.putText(cropped_image, str(average_positive_b), (600,250), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 255))
+
+        cv2.line(cropped_image, (0, int(average_positive_b)), (img_width, int(average_positive_m*img_width+average_positive_b)), (0, 0, 255), 1, cv2.LINE_AA)
+
+    if len(negative_angles) != 0:
+        average_negative = sum(negative_angles) / len(negative_angles)
+        average_negative_b = sum(negative_angle_b) / len(negative_angle_b)
+        average_negative_m = sum(negative_angle_m) / len(negative_angle_m)
+        cv2.putText(cropped_image, str(average_negative), (100,200), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 255))
+        cv2.putText(cropped_image, str(average_negative_b), (100,250), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 255))
+
+        cv2.line(cropped_image, (0, int(average_negative_b)), (img_width, int(average_negative_m*img_width+average_negative_b)), (0, 0, 255), 1, cv2.LINE_AA)
+
+
+    print("hello")
+    # print(str(average_negative)+"          "+str(average_positive))
 
     # x_angle
     # y_
