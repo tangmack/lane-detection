@@ -8,6 +8,8 @@ import unwarp_util
 import math
 import matplotlib.pyplot as plt
 
+import statistics
+
 
 def callback(x):
     pass
@@ -58,7 +60,7 @@ threshold=20
 minLineLength=0
 maxLineGap=0
 
-degree_low = 10
+degree_low = 27
 degree_high = 65
 # create trackbars for color change
 cv2.createTrackbar('rho','image',rho,255,callback)
@@ -286,7 +288,6 @@ while(cap.isOpened()):
 
 
 
-
     ############################################################################################################################################################
 
     linesP_2 = cv2.HoughLinesP(image=mask_combined_wide_removed, rho=rho, theta=np.pi / 180, threshold=threshold, lines=None, minLineLength=3, maxLineGap=maxLineGap)
@@ -336,21 +337,29 @@ while(cap.isOpened()):
     ############################################################################################################################################################
 
 
-
-
     if len(positive_angles) != 0:
-        average_positive = sum(positive_angles) / len(positive_angles)
-        average_positive_b = sum(positive_angle_b) / len(positive_angle_b)
-        average_positive_m = sum(positive_angle_m) / len(positive_angle_m)
+        # average_positive = sum(positive_angles) / len(positive_angles) # Average
+        # average_positive_b = sum(positive_angle_b) / len(positive_angle_b)
+        # average_positive_m = sum(positive_angle_m) / len(positive_angle_m)
+
+        average_positive = statistics.median(positive_angles) # Median
+        average_positive_b = statistics.median(positive_angle_b)
+        average_positive_m = statistics.median(positive_angle_m)
+
         cv2.putText(cropped_image_2, str(average_positive), (600,200), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 255))
         cv2.putText(cropped_image_2, str(average_positive_b), (600,250), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 255))
 
         cv2.line(cropped_image_2, (0, int(average_positive_b)), (img_width, int(average_positive_m*img_width+average_positive_b)), (0, 0, 255), 1, cv2.LINE_AA)
 
     if len(negative_angles) != 0:
-        average_negative = sum(negative_angles) / len(negative_angles)
-        average_negative_b = sum(negative_angle_b) / len(negative_angle_b)
-        average_negative_m = sum(negative_angle_m) / len(negative_angle_m)
+        # average_negative = sum(negative_angles) / len(negative_angles) # Average
+        # average_negative_b = sum(negative_angle_b) / len(negative_angle_b)
+        # average_negative_m = sum(negative_angle_m) / len(negative_angle_m)
+
+        average_negative = statistics.median(negative_angles) # Median
+        average_negative_b = statistics.median(negative_angle_b)
+        average_negative_m = statistics.median(negative_angle_m)
+
         cv2.putText(cropped_image_2, str(average_negative), (100,200), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 255))
         cv2.putText(cropped_image_2, str(average_negative_b), (100,250), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 255))
 
