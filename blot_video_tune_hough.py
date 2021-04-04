@@ -385,7 +385,7 @@ while(cap.isOpened()):
         cv2.putText(cropped_image_2, str(average_positive), (600,200), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 255))
         cv2.putText(cropped_image_2, str(average_positive_b), (600,250), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 255))
 
-        cv2.line(cropped_image_2, (0, int(average_positive_b)), (img_width, int(average_positive_m*img_width+average_positive_b)), (0, 0, 255), 1, cv2.LINE_AA)
+        cv2.line(cropped_image_2, (0, int(average_positive_b)), (img_width, int(average_positive_m*img_width+average_positive_b)), (255, 255, 0), 1, cv2.LINE_AA)
 
     if len(negative_angles) != 0:
         # average_negative = sum(negative_angles) / len(negative_angles) # Average
@@ -399,11 +399,37 @@ while(cap.isOpened()):
         cv2.putText(cropped_image_2, str(average_negative), (100,200), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 255))
         cv2.putText(cropped_image_2, str(average_negative_b), (100,250), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 255))
 
-        cv2.line(cropped_image_2, (0, int(average_negative_b)), (img_width, int(average_negative_m*img_width+average_negative_b)), (0, 0, 255), 1, cv2.LINE_AA)
+        cv2.line(cropped_image_2, (0, int(average_negative_b)), (img_width, int(average_negative_m*img_width+average_negative_b)), (255, 255, 0), 1, cv2.LINE_AA)
     #####################################################################################################################################################################
 
+    if len(positive_angles) != 0 and  len(negative_angles) != 0:
+        img_poly_only = np.zeros(cropped_image_2.shape)
+        # compute 4 points
+        # top of frame (y = 0)
+        y1 = 0
+        x1 = (y1 - average_negative_b)/average_negative_m
 
+        y2 = 0
+        x2 = (y2 - average_positive_b)/average_positive_m
 
+        y3 = img_height - crop_height
+        x3 = (y3 - average_positive_b)/average_positive_m
+
+        y4 = img_height - crop_height
+        x4 = (y4 - average_negative_b)/average_negative_m
+
+        # bottom of frame
+        cv2.circle(cropped_image_2, (int(x1), int(y1)), 5, (255, 255, 0), -1)
+        cv2.circle(cropped_image_2, (int(x2), int(y2)), 5, (255, 255, 0), -1)
+        cv2.circle(cropped_image_2, (int(x3), int(y3)), 5, (255, 255, 0), -1)
+        cv2.circle(cropped_image_2, (int(x4), int(y4)), 5, (255, 255, 0), -1)
+
+        a3 = np.array([[[x1, y1], [x2, y2], [x3, y3], [x4, y4]]], dtype=np.int32)
+        cv2.fillPoly(img_poly_only, a3, (255,255,0))
+
+        alpha = 0.1
+        # output = cropped_image_2.copy()
+        cv2.addWeighted(img_poly_only.astype(np.uint8), alpha, cropped_image_2, 1 - alpha, 0, cropped_image_2)
 
     # x_plot = positive_angles + negative_angles
     # y_plot = positive_angle_b + negative_angle_b
