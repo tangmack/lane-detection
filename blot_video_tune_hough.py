@@ -130,6 +130,7 @@ while(cap.isOpened()):
 
 
     ret, frame = cap.read()
+    frame_out = frame.copy() # final uncropped image for annotating
 
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
@@ -402,7 +403,7 @@ while(cap.isOpened()):
         cv2.line(cropped_image_2, (0, int(average_negative_b)), (img_width, int(average_negative_m*img_width+average_negative_b)), (255, 255, 0), 1, cv2.LINE_AA)
     #####################################################################################################################################################################
 
-    if len(positive_angles) != 0 and  len(negative_angles) != 0:
+    if len(positive_angles) != 0 and  len(negative_angles) != 0: # overlay transparent road mesh
         img_poly_only = np.zeros(cropped_image_2.shape)
         # compute 4 points
         # top of frame (y = 0)
@@ -428,8 +429,47 @@ while(cap.isOpened()):
         cv2.fillPoly(img_poly_only, a3, (255,255,0))
 
         alpha = 0.1
-        # output = cropped_image_2.copy()
         cv2.addWeighted(img_poly_only.astype(np.uint8), alpha, cropped_image_2, 1 - alpha, 0, cropped_image_2)
+        # img_poly_only_full_image = np.zeros(frame_out.shape)
+        # img_poly_only_full_image[crop_height + 1:None, 0:None] = img_poly_only
+        # cv2.addWeighted(img_poly_only_full_image.astype(np.uint8), alpha, frame_out, 1 - alpha, 0, frame_out)
+
+
+        # Compute central line
+        avg_x1_x2 = (x1 + x2)/2
+        avg_y1_y2 = 0
+        avg_x3_x4 = (x3 + x4)/2
+        avg_y3_y4 = img_height - crop_height
+        cv2.line(cropped_image_2, (int(avg_x1_x2), int(avg_y1_y2)), (int(avg_x3_x4), int(avg_y3_y4)), (255, 255, 0), 1, cv2.LINE_AA)
+
+        # Turn Prediction
+        try:
+            angle = int(math.atan((l[1] - l[3]) / (l[0] - l[2])) * 180 / math.pi)
+            angle_central = int(math.atan((avg_y1_y2 - avg_x3_x4) / (avg_x1_x2 - avg_x3_x4)) * 180 / math.pi)
+
+            m_central = (avg_y1_y2 - avg_x3_x4) / (avg_x1_x2 - avg_x3_x4)  # now try to calculate b
+
+            b_central = avg_y1_y2 - m * avg_x1_x2
+
+        except:
+            angle_central = 99
+            m_central = 999
+            b_central = 9999
+            print("angle exception")
+
+        cv2.putText(cropped_image_2, "Turn Magnitude: " + str(round(avg_x1_x2 - avg_x3_x4)), (img_width-400, 200), cv2.FONT_HERSHEY_DUPLEX, .75, (255,255,255))
+
+        if (avg_x3_x4 > avg_x1_x2):
+            cv2.putText(cropped_image_2, "Left Turn", (img_width - 400, 220), cv2.FONT_HERSHEY_DUPLEX, .75, (255, 255, 0))
+        elif (avg_x1_x2 > avg_x3_x4):
+            cv2.putText(cropped_image_2, "Right Turn", (img_width - 400, 220), cv2.FONT_HERSHEY_DUPLEX, .75, (0, 255, 0))
+
+
+    # annotate everything back onto original image
+    frame_out[crop_height+1:None,0:None] = cropped_image_2
+
+
+
 
     # x_plot = positive_angles + negative_angles
     # y_plot = positive_angle_b + negative_angle_b
@@ -437,7 +477,7 @@ while(cap.isOpened()):
     # plt.show()
 
     print(count)
-    cv2.imshow('25',res)
+    cv2.imshow('25',cropped_image)
     cv2.imshow("hsv_cropped", hsv_cropped)
     cv2.imshow("th4", th4)
     cv2.imshow("mask_hsv", mask_hsv)
@@ -447,7 +487,7 @@ while(cap.isOpened()):
     cv2.imshow("mask_combined_yellow", mask_combined_yellow)
     cv2.imshow("im2", im2)
     cv2.imshow("contours_to_delete_mask", contours_to_delete_mask)
-    cv2.imshow("otsu_threshold", white_cars_mask)
+    cv2.imshow("otsu_threshold", frame_out)
     if cv2.waitKey(0) & 0xFF == ord('q'):
         break
     count += 1
