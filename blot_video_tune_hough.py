@@ -113,6 +113,7 @@ cv2.namedWindow('image', ), cv2.moveWindow('image', 2000-img_width-20,hh*2)
 cv2.namedWindow("mask_combined", ), cv2.moveWindow("mask_combined", 2000-img_width,hh*4-20)
 cv2.namedWindow("im2", ), cv2.moveWindow("im2", 2000-img_width,hh*5-20)
 cv2.namedWindow("contours_to_delete_mask", ), cv2.moveWindow("contours_to_delete_mask", 2000-img_width,hh*6-20)
+cv2.namedWindow("otsu_threshold", ), cv2.moveWindow("otsu_threshold", 2000-img_width,hh*1-20)
 
 
 
@@ -249,6 +250,41 @@ while(cap.isOpened()):
             else:
                 cv2.putText(cropped_image, ".", (l[0], l[1]), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,0))
 
+    ####################################################################################### need to filter out large white cars
+    # otsu_threshold = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 21, -5)
+    ret1, otsu_threshold = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
+    contours_car, hierarchy_car = cv2.findContours(otsu_threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    white_cars_mask = np.zeros(mask_combined.shape)
+    big_contours = []
+    for idx, cnt in enumerate(contours_car):
+        area = cv2.contourArea(cnt)
+        if area > 12000:
+            cv2.drawContours(white_cars_mask, contours_car, idx, 255, cv2.FILLED) # mark for deletion!
+            # x, y, w, h = cv2.boundingRect(contours_car[idx])
+            # cv2.putText(white_cars_mask, str(round(area)), (x+100,y+100), cv2.FONT_HERSHEY_DUPLEX, 0.5, 80)
+
+    kernel = np.ones((5, 5), np.uint8)
+    white_cars_mask = cv2.dilate(white_cars_mask, kernel, iterations=1)
+    white_cars_mask_inverted = (255 - white_cars_mask).astype(np.uint8)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -284,7 +320,7 @@ while(cap.isOpened()):
 
     # res = cv2.bitwise_and(cropped_image, cropped_image, mask=mask_combined)
     contours_to_delete_mask_inverted = (255 - contours_to_delete_mask).astype(np.uint8)
-    mask_combined_wide_removed = mask_combined & contours_to_delete_mask_inverted
+    mask_combined_wide_removed = mask_combined & contours_to_delete_mask_inverted & white_cars_mask_inverted
 
 
 
@@ -385,6 +421,7 @@ while(cap.isOpened()):
     cv2.imshow("mask_combined_yellow", mask_combined_yellow)
     cv2.imshow("im2", im2)
     cv2.imshow("contours_to_delete_mask", contours_to_delete_mask)
+    cv2.imshow("otsu_threshold", white_cars_mask)
     if cv2.waitKey(0) & 0xFF == ord('q'):
         break
     count += 1

@@ -13,11 +13,9 @@ while (cap.isOpened()):
     frame = cv2.cvtColor(frame_original, cv2.COLOR_BGR2GRAY)
 
     # frame =  cv2.GaussianBlur(gray, (21, 21), 0)
-    # th3 = cv2.adaptiveThreshold(frame, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, \
-    #                            cv2.THRESH_BINARY, 11, -1)
+    # th3 = cv2.adaptiveThreshold(frame, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, -1)
     # ret2, th3 = cv2.threshold(frame, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     # frame = cv2.GaussianBlur(frame_original, (3, 3), 0)
-    # adjusted = gamma_adjust(frame, gamma)
 
     img_normalized = frame/255
     gamma_inverse = 1/gamma
