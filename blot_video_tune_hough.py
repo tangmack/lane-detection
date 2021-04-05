@@ -1,22 +1,21 @@
 import numpy as np
 import cv2
-
 import numpy as np
 from scipy import ndimage
-
 import unwarp_util
 import math
 import matplotlib.pyplot as plt
-
 import statistics
+import skvideo.io
 
 
 def callback(x):
     pass
 
+
 # video_name = 'night/Night Drive - 2689'
-# video_name = 'data_2/challenge_video' # todo input
-video_name = 'data1'
+video_name = 'data_2/challenge_video' # todo input
+# video_name = 'data1'
 
 if video_name == 'night/Night Drive - 2689':
     string_name = 'Night Drive - 2689'
@@ -121,7 +120,7 @@ else:
 
 
 
-
+writer = skvideo.io.FFmpegWriter(string_name + "outputvideo" + ".mp4")
 count = 0
 while(cap.isOpened()):
 
@@ -500,7 +499,9 @@ while(cap.isOpened()):
     cv2.imshow("im2", im2)
     cv2.imshow("contours_to_delete_mask", contours_to_delete_mask)
     cv2.imshow("otsu_threshold", frame_out)
-    if cv2.waitKey(0) & 0xFF == ord('q'):
+
+    writer.writeFrame(  cv2.cvtColor(frame_out, cv2.COLOR_BGR2RGB)  ) # convert rgb to bgr, save frame
+    if cv2.waitKey(1) & 0xFF == ord('q'):
         break
     count += 1
 
