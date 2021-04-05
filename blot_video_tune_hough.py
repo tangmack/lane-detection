@@ -2,7 +2,6 @@ import numpy as np
 import cv2
 import numpy as np
 from scipy import ndimage
-import unwarp_util
 import math
 import matplotlib.pyplot as plt
 import statistics
@@ -13,7 +12,6 @@ def callback(x):
     pass
 
 
-# video_name = 'night/Night Drive - 2689'
 video_name = 'data_2/challenge_video' # todo input
 # video_name = 'data1'
 
@@ -33,24 +31,12 @@ if cap.isOpened():
     fps = cap.get(cv2.CAP_PROP_FPS)
 
 
-
 if video_name == 'data_2/challenge_video':
     crop_height = int(img_height/2+img_height*.15)
-
-    # left_b_threshold_lower =
-    # left_b_threshold_upper =
-    #
-    # right_b_threshold_lower =
-    # right_b_threshold_upper =
 
 elif video_name == 'data1':
     crop_height = int(img_height/2)
 
-    # left_b_threshold_lower = 330 #
-    # left_b_threshold_upper = 490
-    #
-    # right_b_threshold_lower = -2000
-    # right_b_threshold_upper = -630
 
 cv2.namedWindow('image')
 rho=1
@@ -101,22 +87,33 @@ ilowV_yellow = 146
 ihighV_yellow = 232 # up to 240 to account for 227 or so yellow line middle being deleted
 
 hh = 300
-cv2.namedWindow('contours_to_delete_mask', ), cv2.moveWindow('contours_to_delete_mask', 2000,0)
-cv2.namedWindow("hsv_cropped", ), cv2.moveWindow("hsv_cropped", 2000,hh)
-cv2.namedWindow("th4", ), cv2.moveWindow("th4", 2000,hh*2)
-cv2.namedWindow("mask_hsv", ), cv2.moveWindow("mask_hsv", 2000,hh*3)
-cv2.namedWindow("hough_only", ), cv2.moveWindow("hough_only", 2000,hh*5)
-cv2.namedWindow("mask_combined_yellow", ), cv2.moveWindow("mask_combined_yellow", 2000,hh*4)
+# contours_to_delete_mask
+# hsv_cropped
+# th4
+# mask_hsv
+# hough_only
+# mask_combined_yellow
+# image
+# mask_combined
+# im2
+
+cv2.namedWindow('hsv_cropped', ), cv2.moveWindow('hsv_cropped', 2000,0)
+cv2.namedWindow("th4", ), cv2.moveWindow("th4", 2000,hh)
+cv2.namedWindow("mask_hsv", ), cv2.moveWindow("mask_hsv", 2000,hh*2)
+cv2.namedWindow("mask_hsv_yellow", ), cv2.moveWindow("mask_hsv_yellow", 2000,hh*3)
+cv2.namedWindow("mask_combined", ), cv2.moveWindow("mask_combined", 2000,hh*4)
+cv2.namedWindow("hough_only", ), cv2.moveWindow("hough_only", 2000,hh*5+40)
+# cv2.namedWindow("im2", ), cv2.moveWindow("im2", 3000,hh*4+500)
 
 cv2.namedWindow('image', ), cv2.moveWindow('image', 2000-img_width,int(hh*2.75))
-cv2.namedWindow("mask_combined", ), cv2.moveWindow("mask_combined", 2000-img_width,hh*4-20)
-cv2.namedWindow("im2", ), cv2.moveWindow("im2", 2000-img_width,hh*5-20)
+cv2.namedWindow("contours_to_delete_mask", ), cv2.moveWindow("contours_to_delete_mask", 2000-img_width,hh*4-20)
+cv2.namedWindow("im2", ), cv2.moveWindow("im2", 2000-img_width,hh*5)
 # cv2.namedWindow("contours_to_delete_mask", ), cv2.moveWindow("contours_to_delete_mask", 2000-img_width,hh*6-20)
 
 if video_name == 'data_2/challenge_video':
-    cv2.namedWindow("otsu_threshold", ), cv2.moveWindow("otsu_threshold", 2000-img_width,hh*0)
+    cv2.namedWindow("final_output", ), cv2.moveWindow("final_output", 2000-img_width,hh*0)
 else:
-    cv2.namedWindow("otsu_threshold", ), cv2.moveWindow("otsu_threshold", 2000-img_width,230)
+    cv2.namedWindow("final_output", ), cv2.moveWindow("final_output", 2000-img_width,230)
 
 
 
@@ -322,6 +319,7 @@ while(cap.isOpened()):
     # dilate mask a little
 
     contours_to_delete_mask = cv2.dilate(contours_to_delete_mask, kernel, iterations=1)
+    contours_to_delete_mask_combined = contours_to_delete_mask.astype(np.uint8) & white_cars_mask.astype(np.uint8)
 
     # res = cv2.bitwise_and(cropped_image, cropped_image, mask=mask_combined)
     contours_to_delete_mask_inverted = (255 - contours_to_delete_mask).astype(np.uint8)
@@ -488,20 +486,20 @@ while(cap.isOpened()):
     # plt.show()
 
     print(count)
-    cv2.imshow('contours_to_delete_mask',contours_to_delete_mask)
+    # cv2.imshow('contours_to_delete_mask',contours_to_delete_mask)
     cv2.imshow("hsv_cropped", hsv_cropped)
     cv2.imshow("th4", th4)
     cv2.imshow("mask_hsv", mask_hsv)
     cv2.imshow("mask_combined", mask_combined)
     cv2.imshow("hough_only", hough_only)
     cv2.imshow("image", cropped_image_2)
-    cv2.imshow("mask_combined_yellow", mask_combined_yellow)
+    cv2.imshow("mask_hsv_yellow", mask_hsv_yellow)
     cv2.imshow("im2", im2)
-    cv2.imshow("contours_to_delete_mask", contours_to_delete_mask)
-    cv2.imshow("otsu_threshold", frame_out)
+    cv2.imshow("contours_to_delete_mask", white_cars_mask)
+    cv2.imshow("final_output", frame_out)
 
-    writer.writeFrame(  cv2.cvtColor(frame_out, cv2.COLOR_BGR2RGB)  ) # convert rgb to bgr, save frame
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    # writer.writeFrame(  cv2.cvtColor(frame_out, cv2.COLOR_BGR2RGB)  ) # convert rgb to bgr, save frame
+    if cv2.waitKey(0) & 0xFF == ord('q'):
         break
     count += 1
 
